@@ -12,5 +12,6 @@
 #include "node_rule.h"
 #include "node_ip.h"
 #include "node_port.h"
+#include "route_manager.h"
 
-#endif /* _HEADER_COMMON_H */
+#endif /* _HEADER_COMMON_H */	
