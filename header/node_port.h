@@ -1,6 +1,8 @@
 #ifndef _HEADER_NODE_PORT_H
 #define _HEADER_NODE_PORT_H
 
+#define ROUTE_PORT_ALL  0
+
 struct node_port
 {
 	struct hlist_node hnode;

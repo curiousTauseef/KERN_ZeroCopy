@@ -1,9 +1,8 @@
 #ifndef _HEADER_NODE_RILE_H
 #define _HEADER_NODE_RILE_H
 
-#define RULE_ROUTING_ALL  0 /* Rout all ports */
-#define ROUT_TYPE_SIMPLEX 1
-#define ROUT_TYPE_DUPLEX  2
+#define ROUTE_TYPE_SIMPLEX 1
+#define ROUTE_TYPE_DUPLEX  2
 
 struct node_rule_part
 {
