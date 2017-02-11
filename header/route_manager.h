@@ -1,6 +1,9 @@
 #ifndef _HEADER_ROUTE_MANAGER_H
 #define _HEADER_ROUTE_MANAGER_H
 
+#define DEBUG(type, message) \
+	printk("%s %s %u: %s\n", type, __FUNCTION__, __LINE__, message)
+
 void route_manager_init(void);
 void route_manager_switch(void);
 void route_manager_del(struct node_rule *);
