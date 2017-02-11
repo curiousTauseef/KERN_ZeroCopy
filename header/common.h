@@ -3,7 +3,10 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/skbuff.h>
 #include <linux/slab.h>
+#include <linux/mutex.h>
+#include <linux/spinlock.h>
 #include <linux/hashtable.h>
 #include <linux/rbtree.h>
 #include <linux/list.h>

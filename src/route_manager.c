@@ -1,34 +1,61 @@
 #include "./../header/common.h"
 
+spinlock_t spin_search;		/* To search for and safe switching trees. */
+struct mutex mutex_modify;	/* To secure the modification of rules. */
+
+
 void route_manager_init(void)
 {
 	tree_ip_fist    = RB_ROOT;
 	tree_ip_second  = RB_ROOT;
 	tree_ip_active  = &tree_ip_fist;
 	tree_ip_passive = &tree_ip_second;
-	// mutex for find init
-	// mutex modify init
+
+	spin_lock_init(&spin_search);
+	mutex_init(&mutex_modify);
 }
 
 void route_manager_switch(void)
 {
 	struct rb_root *tmp;
 
-	// mutex for find lock
+	spin_lock(&spin_search);
 	tmp             = tree_ip_active;
 	tree_ip_active  = tree_ip_passive;
 	tree_ip_passive = tmp;
-	// mutex for find unlock
+	spin_unlock(&spin_search);
 }
 
 void route_manager_del(struct node_rule *rule)
 {
-	// mutex modify lock
+	mutex_lock(&mutex_modify);
+	__route_manager_del(rule);	
+	mutex_unlock(&mutex_modify);
+}
 
-	// mutex modify unlock
+void __route_manager_del(struct node_rule *rule)
+{
+	return; //The temporary plug
 }
 
 int route_manager_add(struct node_rule *rule)
+{
+	int err;
+
+	mutex_lock(&mutex_modify);
+	err = __route_manager_add(rule);
+	if (err)
+		goto complete;
+	route_manager_switch();
+	err = __route_manager_add(rule);
+
+complete:
+	mutex_unlock(&mutex_modify);
+	return err;
+}
+
+
+int __route_manager_add(struct node_rule *rule)
 {
 	int index;
 	int count_parts;
@@ -47,7 +74,6 @@ int route_manager_add(struct node_rule *rule)
 			return -EINVAL;
 	}
 
-	// mutex modify lock
 	for (index = 0; index < count_parts; index++) {
 		nip = node_ip_get(tree_ip_passive, &(rule->parts[index].ip));
 		if (!nip) {
@@ -72,10 +98,14 @@ int route_manager_add(struct node_rule *rule)
 		}
 		node_port_add(nip, nport);
 	}
-	// mutex modify unlock
 	return 0;
+
 abort:
-	// mutex modify unlock
-	route_manager_del(rule);
+	__route_manager_del(rule);
 	return -ENOMEM;
+}
+
+struct node_port *route_manager_get(struct sk_buff *skb)
+{
+	return NULL; // The temporary plug.
 }
