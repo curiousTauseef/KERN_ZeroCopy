@@ -1,7 +1,7 @@
 #ifndef _HEADER_NODE_TREE_H
 #define _HEADER_NODE_TREE_H
 
-#define NODE_PORH_HASH_SIZE 8
+#define NODE_IP_HASH_SIZE 6
 
 extern struct rb_root tree_ip_fist;
 extern struct rb_root tree_ip_second;
@@ -11,7 +11,7 @@ extern struct rb_root *tree_ip_passive;
 struct node_ip
 {
 	struct rb_node    tnode;
-	struct hlist_head hashtable[1 << (NODE_PORH_HASH_SIZE)];
+	struct hlist_head hashtable[1 << (NODE_IP_HASH_SIZE)];
 
 	u8                index_part; /* The index part of rules for search */
 	struct node_rule  *rule;
