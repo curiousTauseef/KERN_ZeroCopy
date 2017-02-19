@@ -65,7 +65,6 @@ struct node_ip *node_ip_get(struct rb_root *root, struct in6_addr *ip)
 		int rez;
 
 		nip = container_of(tmp, struct node_ip, tnode);
-		printk("node_ip_get: stack find %d\n", *((int *)(&(nip->rule->parts[nip->index_part].ip))));
 		rez = ipv6_addr_cmp(ip, &(nip->rule->parts[nip->index_part].ip));
 
 		if (rez < 0)
@@ -76,4 +75,10 @@ struct node_ip *node_ip_get(struct rb_root *root, struct in6_addr *ip)
   			return nip;
 	}
 	return NULL;
+}
+
+void convert_ipv4_to_ipv6(u32 *ipv4, struct in6_addr *ipv6)
+{
+	memset(ipv6, 0, sizeof(struct in6_addr));
+	memcpy(ipv6, ipv4, sizeof(u32));
 }

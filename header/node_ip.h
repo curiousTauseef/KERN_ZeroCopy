@@ -22,5 +22,6 @@ void node_ip_del(struct rb_root *, struct node_ip *);
 void node_ip_dst(struct rb_root *);	
 struct node_ip *node_ip_new(struct node_rule *, u8);
 struct node_ip *node_ip_get(struct rb_root *, struct in6_addr *);
+void ip4_to_ip6(u32 *, struct in6_addr *);
 
 #endif  /* _HEADER_NODE_TREE_H */
