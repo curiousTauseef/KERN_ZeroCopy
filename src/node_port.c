@@ -31,7 +31,7 @@ struct node_port *node_port_new(struct node_rule *rule, u8 index)
 {
 	struct node_port *new_node;
 
-	new_node = kmalloc(sizeof(struct node_rule), GFP_KERNEL);
+	new_node = kmalloc(sizeof(struct node_port), GFP_KERNEL);
 	if (new_node)
 	{
 		new_node->rule = rule;

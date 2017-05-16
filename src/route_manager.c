@@ -21,7 +21,7 @@ void route_manager_init(void)
 	memset(&nfhops, 0, sizeof(struct nf_hook_ops));
 	nfhops.hook	= route_manager_sniffer;
 	nfhops.pf	= PF_INET;
-	nfhops.hooknum	= NF_INET_LOCAL_IN;
+	nfhops.hooknum	= NF_INET_PRE_ROUTING;
 	nfhops.priority	= NF_IP_PRI_FIRST;
 	nf_register_hook(&nfhops);
 }
@@ -86,21 +86,21 @@ void __route_manager_del(struct node_rule *rule)
 			count_parts = 2;
 			break;
 		default:
-			DEBUG("ERROR", "invalid toute type");
+			// DEBUG("ERROR", "invalid toute type");
 			return;
 	}
 
 	for (index = 0; index < count_parts; index++) {
 		nip = node_ip_get(tree_ip_passive, &(rule->parts[index].ip));
 		if (!nip) {
-			DEBUG("WARNING", "node ip not found");
+			// DEBUG("WARNING", "node ip not found");
 			return;
 		}
 		nport = node_port_get(nip, rule->parts[index].port);
 		if (nport)
 			node_port_del(nport);
 		else
-			DEBUG("WARNING", "node port not found");
+			// DEBUG("WARNING", "node port not found");
 		if (hash_empty(nip->hashtable))
 			node_ip_del(tree_ip_passive, nip);
 	}
@@ -164,7 +164,7 @@ int __route_manager_add(struct node_rule *rule)
 			count_parts = 2;
 			break;
 		default:
-			DEBUG("ERROR", "invalid toute type");
+			// DEBUG("ERROR", "invalid toute type");
 			return -EINVAL;
 	}
 
@@ -230,7 +230,7 @@ struct node_port *route_manager_get(struct sk_buff *skb)
 		case ETH_P_IP: {
 			struct iphdr *iph = ip_hdr(skb);
 			transport_protocol = iph->protocol;
-			convert_ipv4_to_ipv6(&(iph->saddr), &ip);
+			convert_ipv4_to_ipv6(&(iph->daddr), &ip);
 			break;
 		}
 		default:
@@ -239,12 +239,12 @@ struct node_port *route_manager_get(struct sk_buff *skb)
 	switch (transport_protocol) {
 		case IPPROTO_TCP: {
 			struct tcphdr *tcph = tcp_hdr(skb);
-			port = (u16)tcph->source;
+			port = (u16)tcph->dest;
 			break;
 		}
 		case IPPROTO_UDP: {
 			struct udphdr *udph = udp_hdr(skb);
-			port = (u16)udph->source;
+			port = (u16)udph->dest;
 			break;
 		}
 		default:
@@ -300,50 +300,51 @@ int route_manager_redirect(struct sk_buff *skb,
 {
 	struct net *net;
 	struct rtable *rtable;
-	struct sk_buff *newskb;
+	//struct sk_buff *newskb;
+	struct iphdr *iph;
 
 	u8 transport_protocol;
 	u16 network_protocol;
 
-	newskb = skb_copy(skb, GFP_ATOMIC);
+	/*newskb = skb_copy(skb, GFP_ATOMIC);
 	if (!newskb) {
-		DEBUG("FATAL ERROR", "Unable to allocate memory");
+		// DEBUG("FATAL ERROR", "Unable to allocate memory");
 		goto skip_packet;
-	}
-	newskb->dev = state->in;
-	net = dev_net(newskb->dev);
-	if (skb_dst(skb)->error) {
-		DEBUG("FATAL ERROR", "skb_dst failed");
+	}*/
+	skb->dev = state->in;
+	//newskb->dev = state->in;
+	net = dev_net(skb->dev);
+	/*if (skb_dst(skb)->error) {
+		// DEBUG("FATAL ERROR", "skb_dst failed");
 		goto abort;
-	}
+	}*/
 
 	/**
 	 * Для сетевого уровня обязательно необходимо заменить ip источника,
 	 * т.к будут проблемы с дальнейшей маршрутезацией пакета в сети.
 	 */
-	network_protocol = newskb->protocol;
+	network_protocol = skb->protocol;
 #if defined(__LITTLE_ENDIAN_BITFIELD)
 	network_protocol = ntohs(network_protocol);
 #endif
 	switch (network_protocol) {
 		case ETH_P_IP: {
 			struct flowi4 fl4;
-			struct iphdr *iph;
 			struct in6_addr *ipv6;
 
-			iph = ip_hdr(newskb);
+			iph = ip_hdr(skb);
 			ipv6 = &(nport->rule->parts[!(nport->index_part)].ip);
 			transport_protocol = iph->protocol;
 
 			fl4.saddr = iph->daddr;
 			convert_ipv6_to_ipv4(ipv6, &(fl4.daddr));
-			fl4.flowi4_oif = newskb->dev->ifindex;
+			fl4.flowi4_oif = skb->dev->ifindex;
 
 			iph->saddr = fl4.saddr;
 			iph->daddr = fl4.daddr;
 
 			rtable = ip_route_output_key(net, &fl4);
-			skb_dst_set(newskb, &rtable->dst);
+			skb_dst_set(skb, &rtable->dst);
 			break;
 		}
 	}
@@ -353,24 +354,35 @@ int route_manager_redirect(struct sk_buff *skb,
 	 * нужно, поскольку тогда, в случае дуплексного правла, обратно
 	 * пакет приложение не получит.
 	 */
+	skb->csum = 0;
 	switch (transport_protocol) {
 		case IPPROTO_TCP: {
-			struct tcphdr *tcph = tcp_hdr(newskb);
+			struct tcphdr *tcph = tcp_hdr(skb);
 			tcph->dest = nport->rule->parts[!(nport->index_part)].port;
 			break;
 		}
 		case IPPROTO_UDP: {
-			struct udphdr *udph = udp_hdr(newskb);
+			struct udphdr *udph = udp_hdr(skb);
+			unsigned int offset = skb_transport_offset(skb);
+			
+			udph->check = 0;
 			udph->dest = nport->rule->parts[!(nport->index_part)].port;
+			skb->csum = skb_checksum(skb, offset, 
+						    skb->len - offset, 0);
+			udph->check = csum_tcpudp_magic(iph->saddr,
+							iph->daddr,
+							skb->len - offset, 
+							IPPROTO_UDP,
+							skb->csum);
 			break;
 		}
 	}
-	ip_local_out(net, newskb->sk, newskb);
+	ip_local_out(net, skb->sk, skb);
 	return 0;
 
-abort:
+/*abort:
 	kfree_skb(newskb);
-	
+	*/
 skip_packet:
 	return -ENOMEM;
 }
@@ -386,12 +398,12 @@ unsigned int route_manager_sniffer(void *priv, struct sk_buff *skb,
 	struct node_port *nport = route_manager_get(skb);
 	if (!nport)
 		goto skip_packet;
-	DEBUG("INFO", "rule finded");
+	// DEBUG("INFO", "rule finded");
 	if(route_manager_redirect(skb, state, nport))
 		goto skip_packet;
-	else
-		DEBUG("INFO", "redirect sucsess");
-	return NF_DROP;
+	// else
+	// 	DEBUG("INFO", "redirect sucsess");
+	return NF_STOLEN;
 
 skip_packet:
 	return NF_ACCEPT;

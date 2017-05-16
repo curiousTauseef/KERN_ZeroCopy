@@ -9,10 +9,10 @@ all:
 	$(MAKE) -C $(kernel-dir) M=$(pwd) modules
 
 install:
-	insmod ./$(mod-name).ko
+	sudo insmod ./$(mod-name).ko
 
 remove:
-	rmmod -f $(mod-name)
+	sudo rmmod -f $(mod-name)
 
 clean:
 	rm -rf *.o *.ko *.order *.symvers *.mod.c .tmp* *.order .$(mod-name).* src/.*

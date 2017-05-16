@@ -12,6 +12,7 @@
 #include <net/ipv6.h>
 #include <linux/tcp.h>
 #include <linux/udp.h>
+#include <net/udp.h>
 #include <linux/netfilter.h>
 #include <linux/netfilter_ipv4.h>
 #include <linux/slab.h>
