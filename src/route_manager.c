@@ -8,7 +8,7 @@ struct nf_hook_ops nfhops;
  * route_manager_init - выполняет инициализацию все структур и
  * подготовку модуля.
  */
-void route_manager_init(void)
+int route_manager_init(void)
 {
 	tree_ip_fist    = RB_ROOT;
 	tree_ip_second  = RB_ROOT;
@@ -24,6 +24,7 @@ void route_manager_init(void)
 	nfhops.hooknum	= NF_INET_PRE_ROUTING;
 	nfhops.priority	= NF_IP_PRI_FIRST;
 	nf_register_hook(&nfhops);
+	return user_netlink_init();
 }
 
 /**
@@ -32,6 +33,7 @@ void route_manager_init(void)
  */
 void route_manager_destroy(void)
 {
+	user_netlink_destroy();
 	nf_unregister_hook(&nfhops);
 	node_ip_dst(tree_ip_passive);
 	node_ip_dst(tree_ip_active);
@@ -380,11 +382,11 @@ int route_manager_redirect(struct sk_buff *skb,
 	ip_local_out(net, skb->sk, skb);
 	return 0;
 
-/*abort:
-	kfree_skb(newskb);
-	*/
-skip_packet:
-	return -ENOMEM;
+// abort:
+// 	kfree_skb(newskb);
+	
+// skip_packet:
+// 	return -ENOMEM;
 }
 
 /**

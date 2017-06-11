@@ -17,10 +17,13 @@ struct sk_parsed
 	u8  protocol_transport;
 };
 
+extern spinlock_t spin_search;
+extern struct mutex mutex_modify;
+
 #define DEBUG(type, message) \
 	printk("%s %s %u: %s\n", type, __FUNCTION__, __LINE__, message)
 
-void route_manager_init(void);
+int route_manager_init(void);
 void route_manager_destroy(void);
 void route_manager_switch(void);
 bool route_manager_parse(struct sk_buff *, struct sk_parsed *);

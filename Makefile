@@ -3,7 +3,7 @@ pwd := $(shell pwd)
 mod-name := zcopy_mod
 ccflags-y := -std=gnu99
 obj-m += $(mod-name).o
-$(mod-name)-objs := src/node_rule.o src/node_ip.o src/node_port.o src/route_manager.o src/main.o
+$(mod-name)-objs := src/node_rule.o src/node_ip.o src/node_port.o src/route_manager.o src/user_netlink.o src/main.o
 
 all:
 	$(MAKE) -C $(kernel-dir) M=$(pwd) modules

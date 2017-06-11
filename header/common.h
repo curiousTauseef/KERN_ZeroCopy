@@ -22,9 +22,11 @@
 #include <linux/rbtree.h>
 #include <linux/list.h>
 #include <linux/types.h>
+#include <net/netlink.h>
 #include "node_rule.h"
 #include "node_ip.h"
 #include "node_port.h"
 #include "route_manager.h"
+#include "user_netlink.h"
 
 #endif /* _HEADER_COMMON_H */	

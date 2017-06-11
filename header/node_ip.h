@@ -1,7 +1,7 @@
 #ifndef _HEADER_NODE_TREE_H
 #define _HEADER_NODE_TREE_H
 
-#define NODE_IP_HASH_SIZE 8
+#define NODE_IP_HASH_SIZE 16
 
 extern struct rb_root tree_ip_fist;
 extern struct rb_root tree_ip_second;

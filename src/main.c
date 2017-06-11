@@ -94,14 +94,34 @@ static void generate_rand_rules(u32 count_ip, u32 count_port)
 int init_module(void)
 {
 	struct node_rule *rule, *rule_new;
-	int count_port = 100000;
+	int count_port = 10;
 
-	route_manager_init();
+	if (route_manager_init())
+		return -1;
 	rule = kmalloc(sizeof(struct node_rule), GFP_KERNEL);
 	rule->route_type = ROUTE_TYPE_SIMPLEX;
 	rule->parts[0].ip = convert_ip4_to_ip6(htonl(0x7F000001));
 	rule->parts[1].ip = convert_ip4_to_ip6(htonl(0x7F000001));
+	/*rule->parts[0].port = htons(20501);
+	rule->parts[1].port = htons(20502);*/
+	route_manager_add(rule);
 
+	/*for (int count_ip = 0; count_ip < 1024; count_ip++) {
+		rule = kmalloc(sizeof(struct node_rule), GFP_KERNEL);
+		if (!rule) {
+			route_manager_destroy();
+			return false;
+		}
+
+		rule->route_type = ROUTE_TYPE_SIMPLEX;
+		generate_rand_ip(&rule->parts[0].ip);
+		generate_rand_ip(&rule->parts[1].ip);
+		for(int count_port = 0; count_port < 1; count_port++) {
+			generate_rand_port(&(rule->parts[0].port));
+			generate_rand_port(&(rule->parts[1].port));
+		}
+		route_manager_add(rule);
+	}*/
 	for (int i = 0; i < count_port; i++) {
 		rule_new = kmalloc(sizeof(struct node_rule), GFP_KERNEL);
 		memmove(rule_new, rule, sizeof(struct node_rule));
